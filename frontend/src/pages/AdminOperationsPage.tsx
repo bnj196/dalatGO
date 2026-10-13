@@ -18,7 +18,7 @@ import { api, DispatchRecord, PassengerManifest } from '../lib/api'
 
 export function AdminOperationsPage() {
   const [dispatches, setDispatches] = useState<DispatchRecord[]>([])
-  const [activeDepartureId, setActiveDepartureId] = useState<string>('dep-1')
+  const [activeDepartureId, setActiveDepartureId] = useState<string>('')
   const [editingResource, setEditingResource] = useState(false)
   const [guideInput, setGuideInput] = useState('')
   const [vehicleInput, setVehicleInput] = useState('')
@@ -28,8 +28,8 @@ export function AdminOperationsPage() {
   const loadData = async () => {
     const data = await api.getDispatches()
     setDispatches(data)
-    if (data.length > 0 && !activeDepartureId) {
-      setActiveDepartureId(data[0].departure_id)
+    if (data.length > 0) {
+      setActiveDepartureId(prev => prev || data[0].departure_id)
     }
   }
 

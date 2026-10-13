@@ -112,15 +112,8 @@ export function AdminDashboardPage() {
     api
       .adminDashboard()
       .then(setStats)
-      .catch(() => {
-        // Fallback demo stats for smooth review
-        setStats({
-          users: 3,
-          tours: 12,
-          departures: 18,
-          bookings: 8,
-          pending_bookings: 2,
-        })
+      .catch(err => {
+        setError(err.message || 'Không thể tải dữ liệu thống kê từ máy chủ')
       })
 
   useEffect(() => {
@@ -128,14 +121,14 @@ export function AdminDashboardPage() {
   }, [])
 
   const cards: Array<[string, number, LucideIcon, string]> = [
-    ['Người dùng', stats?.users || 3, Users, 'Tài khoản hoạt động'],
-    ['Tour đang quản lý', stats?.tours || 12, Compass, 'Hành trình công khai'],
-    ['Lịch khởi hành', stats?.departures || 18, CalendarDays, 'Lịch trình khả dụng'],
+    ['Người dùng', stats?.users ?? 0, Users, 'Tài khoản hoạt động'],
+    ['Tour đang quản lý', stats?.tours ?? 0, Compass, 'Hành trình công khai'],
+    ['Lịch khởi hành', stats?.departures ?? 0, CalendarDays, 'Lịch trình khả dụng'],
     [
       'Booking',
-      stats?.bookings || 8,
+      stats?.bookings ?? 0,
       WalletCards,
-      `${stats?.pending_bookings || 2} chờ xác nhận cọc`,
+      `${stats?.pending_bookings ?? 0} chờ xác nhận cọc`,
     ],
   ]
 

@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db.base import Base  # noqa: E402
-from app.models import AuditLog, Booking, Departure, Tour, User  # noqa: E402
+from app.models import AuditLog, Booking, Departure, Review, Tour, User  # noqa: E402
 
-MODELS = [User, Tour, Departure, Booking, AuditLog]
+MODELS = [User, Tour, Departure, Booking, Review, AuditLog]
 
 
 def sql_value(value, column=None) -> str:

@@ -9,9 +9,9 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
-from app.models import AuditLog, Booking, Departure, Tour, User
+from app.models import AuditLog, Booking, Departure, Review, Tour, User
 
-TABLES = [User, Tour, Departure, Booking, AuditLog]
+TABLES = [User, Tour, Departure, Booking, Review, AuditLog]
 
 
 def make_url() -> str:

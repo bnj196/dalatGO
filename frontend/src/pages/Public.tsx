@@ -32,68 +32,6 @@ const TOUR_IMAGES: Record<string, string> = {
   'DL-12': 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1200&q=85',
 }
 
-export const DEFAULT_TOURS: Tour[] = [
-  {
-    id: '746b83a2-7235-4fc5-9cc3-f424b6dd9935',
-    code: 'DL-01',
-    name: 'Săn mây Cầu Đất & đồi chè xanh',
-    tour_type: 'NATURE',
-    description: 'Bình minh trên đồi chè, biển mây bồng bềnh và một buổi sáng thật chậm giữa cao nguyên ngàn thông.',
-    duration_minutes: 480,
-    base_price: 690000,
-    status: 'PUBLISHED',
-  },
-  {
-    id: '0d47fa94-41b6-482d-8b07-ffcaf014ee1f',
-    code: 'DL-02',
-    name: 'Ba thác hoang sơ Đà Lạt',
-    tour_type: 'ADVENTURE',
-    description: 'Khám phá Datanla, Prenn và Pongour trong hành trình thiên nhiên giàu cảm xúc.',
-    duration_minutes: 600,
-    base_price: 890000,
-    status: 'PUBLISHED',
-  },
-  {
-    id: '9133b807-88e5-44ae-a633-bb6146eb44f7',
-    code: 'DL-03',
-    name: 'Đà Lạt bình yên: cà phê & hoàng hôn',
-    tour_type: 'CHILL',
-    description: 'Một ngày thảnh thơi qua những quán cà phê view thung lũng, ga cổ và đồi hoàng hôn lãng mạn.',
-    duration_minutes: 420,
-    base_price: 590000,
-    status: 'PUBLISHED',
-  },
-  {
-    id: '7a679c3c-673c-4a72-8e90-a8c975060edd',
-    code: 'DL-05',
-    name: 'Cắm trại bên hồ Tuyền Lâm',
-    tour_type: 'CAMPING',
-    description: 'Rời xa phố thị, dựng lều bên hồ thông reo, nướng BBQ ngắm bầu trời sao cao nguyên kỳ diệu.',
-    duration_minutes: 1440,
-    base_price: 1290000,
-    status: 'PUBLISHED',
-  },
-  {
-    id: 'e2d72d8b-2eca-4c5b-87af-1dcb23bdc28d',
-    code: 'DL-07',
-    name: 'Trekking Langbiang đón bình minh',
-    tour_type: 'TREKKING',
-    description: 'Chinh phục đỉnh núi huyền thoại cùng hướng dẫn viên địa phương, phóng tầm mắt bao trọn thung lũng.',
-    duration_minutes: 540,
-    base_price: 990000,
-    status: 'PUBLISHED',
-  },
-  {
-    id: '094acb25-48cf-4a06-8be2-11e1184b247e',
-    code: 'DL-09',
-    name: 'Nghỉ dưỡng villa giữa rừng thông',
-    tour_type: 'RESORT',
-    description: 'Hai ngày một đêm nghỉ dưỡng tại villa biệt lập, thưởng thức ẩm thực cao nguyên chuẩn vị.',
-    duration_minutes: 2880,
-    base_price: 2490000,
-    status: 'PUBLISHED',
-  },
-]
 
 export function tourImage(code: string): string | undefined {
   return TOUR_IMAGES[code]
@@ -234,11 +172,8 @@ function FeaturedTours() {
   useEffect(() => {
     api
       .tours()
-      .then(res => {
-        if (res && res.length > 0) setTours(res)
-        else setTours(DEFAULT_TOURS)
-      })
-      .catch(() => setTours(DEFAULT_TOURS))
+      .then(res => setTours(res || []))
+      .catch(() => setTours([]))
   }, [])
 
   return (
@@ -275,14 +210,8 @@ export function ToursPage() {
     setLoading(true)
     api
       .tours(search)
-      .then(res => {
-        if (res && res.length > 0) {
-          setTours(res)
-        } else {
-          setTours(DEFAULT_TOURS)
-        }
-      })
-      .catch(() => setTours(DEFAULT_TOURS))
+      .then(res => setTours(res || []))
+      .catch(() => setTours([]))
       .finally(() => setLoading(false))
   }
 

@@ -22,65 +22,6 @@ import { api, Departure, Tour, Booking, Review } from '../lib/api'
 import { tourImage } from './Public'
 import { VietQRModal } from '../components/VietQRModal'
 
-const FALLBACK_TOURS: Tour[] = [
-  {
-    id: '746b83a2-7235-4fc5-9cc3-f424b6dd9935',
-    code: 'DL-01',
-    name: 'Săn mây Cầu Đất & đồi chè xanh',
-    tour_type: 'NATURE',
-    description: 'Bình minh trên đồi chè, biển mây bồng bềnh và một buổi sáng thật chậm giữa cao nguyên ngàn thông.',
-    duration_minutes: 480,
-    base_price: 690000,
-    status: 'PUBLISHED',
-  },
-  {
-    id: '0d47fa94-41b6-482d-8b07-ffcaf014ee1f',
-    code: 'DL-02',
-    name: 'Ba thác hoang sơ Đà Lạt',
-    tour_type: 'ADVENTURE',
-    description: 'Khám phá Datanla, Prenn và Pongour trong hành trình thiên nhiên giàu cảm xúc.',
-    duration_minutes: 600,
-    base_price: 890000,
-    status: 'PUBLISHED',
-  },
-  {
-    id: '9133b807-88e5-44ae-a633-bb6146eb44f7',
-    code: 'DL-03',
-    name: 'Đà Lạt bình yên: cà phê & hoàng hôn',
-    tour_type: 'CHILL',
-    description: 'Một ngày thảnh thơi qua những quán cà phê view thung lũng, ga cổ và đồi hoàng hôn lãng mạn.',
-    duration_minutes: 420,
-    base_price: 590000,
-    status: 'PUBLISHED',
-  },
-]
-
-const DEFAULT_DEPARTURES: Departure[] = [
-  {
-    id: 'dep-1',
-    tour_id: '746b83a2-7235-4fc5-9cc3-f424b6dd9935',
-    departure_date: '2026-10-18',
-    max_capacity: 12,
-    booked_capacity: 4,
-    status: 'OPEN',
-  },
-  {
-    id: 'dep-2',
-    tour_id: '746b83a2-7235-4fc5-9cc3-f424b6dd9935',
-    departure_date: '2026-10-25',
-    max_capacity: 12,
-    booked_capacity: 2,
-    status: 'OPEN',
-  },
-  {
-    id: 'dep-3',
-    tour_id: '0d47fa94-41b6-482d-8b07-ffcaf014ee1f',
-    departure_date: '2026-10-19',
-    max_capacity: 10,
-    booked_capacity: 3,
-    status: 'OPEN',
-  },
-]
 
 const AVAILABLE_ADDONS = [
   {
@@ -124,13 +65,7 @@ export function LoginPage() {
       localStorage.setItem('dalatgo_role', me.role)
       navigate(me.role === 'ADMIN' ? '/admin' : '/tours')
     } catch {
-      if (email === 'admin@dalatgo.local' && password === 'Admin123!') {
-        localStorage.setItem('dalatgo_token', 'demo_admin_token')
-        localStorage.setItem('dalatgo_role', 'ADMIN')
-        navigate('/admin')
-      } else {
-        setError('Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.')
-      }
+      setError('Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.')
     } finally {
       setLoading(false)
     }
@@ -217,28 +152,22 @@ export function TourDetailPage() {
     api
       .tours()
       .then(items => {
-        const found =
-          items.find(x => x.id === id) ||
-          FALLBACK_TOURS.find(x => x.id === id) ||
-          items[0] ||
-          FALLBACK_TOURS[0]
+        const found = items.find(x => x.id === id || x.code === id) || items[0]
         setTour(found)
         if (found) {
           api
             .departures()
             .then(deps => {
               const matched = deps.filter(item => item.tour_id === found.id)
-              setDepartures(matched.length > 0 ? matched : DEFAULT_DEPARTURES)
+              setDepartures(matched)
             })
-            .catch(() => setDepartures(DEFAULT_DEPARTURES))
-          void api.getReviews(found.id).then(setReviews)
+            .catch(() => setDepartures([]))
+          void api.getReviews(found.id).then(setReviews).catch(() => setReviews([]))
         }
       })
       .catch(() => {
-        const found = FALLBACK_TOURS.find(x => x.id === id) || FALLBACK_TOURS[0]
-        setTour(found)
-        setDepartures(DEFAULT_DEPARTURES)
-        void api.getReviews('').then(setReviews)
+        setTour(undefined)
+        setDepartures([])
       })
   }, [id])
 

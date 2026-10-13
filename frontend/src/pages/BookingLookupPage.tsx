@@ -19,7 +19,7 @@ import { api, Booking } from '../lib/api'
 import { VietQRModal } from '../components/VietQRModal'
 
 export function BookingLookupPage() {
-  const [code, setCode] = useState('DLG-9021')
+  const [code, setCode] = useState('')
   const [phone, setPhone] = useState('')
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(false)
@@ -81,28 +81,6 @@ export function BookingLookupPage() {
         />
         <button className="button button-primary" onClick={() => handleSearch(code, phone)}>
           {loading ? 'Đang tìm...' : 'Tra cứu vé'}
-        </button>
-      </div>
-
-      <div className="demo-lookup-hints">
-        <small>Thử nhanh mã mẫu:</small>
-        <button
-          className="hint-btn"
-          onClick={() => {
-            setCode('DLG-9021')
-            handleSearch('DLG-9021', '')
-          }}
-        >
-          DLG-9021 (Đã xác nhận &amp; Thanh toán đủ)
-        </button>
-        <button
-          className="hint-btn"
-          onClick={() => {
-            setCode('DLG-8843')
-            handleSearch('DLG-8843', '')
-          }}
-        >
-          DLG-8843 (Chờ thanh toán cọc)
         </button>
       </div>
 
