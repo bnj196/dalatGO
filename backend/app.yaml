@@ -1,0 +1,34 @@
+kind: wasmer.io/App.v0
+name: DaLatGO_backend
+app_id: da_K1EIZtMUY91M
+owner: bnj196
+package: .
+annotations:
+  anybuild.run/config:
+    asgi_application: app.main:app
+    commands:
+      start: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    env:
+      PG_HOST: psql.fr-roub1.bengt.wasmernet.com
+      PG_PORT: "20184"
+      PG_DATABASE: dalatGO
+      PG_USER: user_809a0c61
+      PG_SSLMODE: require
+    name: out
+    python_cross_platform: wasix_wasm32
+    python_extra_index_url: https://python-registry.wasix.org/simple
+    python_framework: fastapi
+    python_install_inputs:
+    - requirements.txt
+    python_main_file: app/main.py
+    python_server: uvicorn
+    services:
+    - engine: postgres
+      name: database
+  anybuild.run/provider: python
+  anybuild.run/version: 0.33.0
+  wasmer.io/version: 7.5.0
+capabilities:
+  database:
+    engine: postgres
+enableDatabase: true

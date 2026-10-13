@@ -1,0 +1,153 @@
+DALAT Go – Technical Implementation Process
+Version: 1.0
+Source documents: docs/BRD.md, docs/SRS.md, docs/USE_CASES.md, docs/USER_STORIES.md
+
+[01] BASELINE AND SCOPE
+- Confirm project scope: tour discovery, booking, payment, operations, trip execution, settlement, notifications, reports.
+- Confirm MVP stories: US-A01, US-A02, US-B01, US-B02, US-B03, US-C01, US-C02, US-C03, US-C04, US-D01, US-D02, US-D03, US-F01, US-F02, US-F03, US-F04, US-G01, US-G02, US-G03, US-G04.
+- Treat OI-01, OI-02 and OI-03 as unresolved business rules. Do not automate them before approval.
+- Agree the first deployment target, supported browsers, email/phone provider, payment mode and map provider.
+
+[02] PRODUCT AND UX ANALYSIS
+- Convert UC-01 through UC-08 into screen flows and user journeys.
+- Define navigation separately for customer and internal staff.
+- Identify form fields, validation rules, empty states, error states, loading states and permission states.
+- Review wireframes with Customer, Sale, Operations, Guide, Accounting and Manager representatives.
+- Freeze MVP acceptance criteria before implementation.
+
+[03] TECHNICAL ARCHITECTURE
+- Choose frontend, backend, database, object storage, cache, queue and deployment platform.
+- Use a modular architecture: Auth, Tour, Booking, Payment, Operations, Trip, Expense, Notification, Reporting and Audit.
+- Define REST or GraphQL API conventions, API versioning, pagination, filtering and error format.
+- Define authentication tokens/session handling, RBAC middleware and audit middleware.
+- Define idempotency for payment callbacks and booking confirmation.
+
+[04] REPOSITORY AND ENVIRONMENT SETUP
+- Create application repository structure for frontend, backend, database migrations, tests and infrastructure.
+- Add environment templates without real secrets.
+- Configure formatting, linting, type checking, pre-commit checks and CI.
+- Configure local development services for database, object storage, mail testing and optional queue.
+- Add seed data for roles, permissions, sample tours, departures and test users.
+
+[05] DATABASE DESIGN
+- Implement tables from docs/DATABASE.md and migration files in dependency order.
+- Add UUID or equivalent stable primary keys, timestamps and soft-delete policy where applicable.
+- Add unique constraints for user email/phone, tour code, booking code and payment transaction reference.
+- Add foreign keys for Tour-Departure, Booking-Guest, Booking-Payment, Assignment and Trip-Expense relationships.
+- Add check constraints for money, capacity, status and date values.
+- Protect slot updates with transactions and row-level locking or an equivalent concurrency strategy.
+- Add indexes for booking code, customer phone, departure date, status and reporting filters.
+- Run migration, rollback and fresh-install tests.
+
+[06] IDENTITY AND ACCESS CONTROL
+- Implement registration, login, logout, password reset and account lockout.
+- Implement roles: CUSTOMER, SALE, OPERATIONS, GUIDE, ACCOUNTING, MANAGER, ADMIN, PARTNER.
+- Protect every API route and UI action with permission checks.
+- Test horizontal and vertical access-control violations.
+- Write audit records for login/security events and permission changes.
+
+[07] TOUR AND DEPARTURE MODULE
+- Implement tour CRUD, itinerary stops, pricing, policies, media and publication status.
+- Implement departure CRUD, maximum capacity, booked capacity, remaining capacity and departure status.
+- Implement customer search and tour detail pages.
+- Add versioning for pricing and policies.
+- Prevent publishing incomplete tours.
+
+[08] BOOKING MODULE
+- Implement customer profile and booking creation for customer and Sale channels.
+- Implement temporary slot hold with expiration.
+- Implement booking price calculation, add-ons, voucher validation and deposit calculation.
+- Implement booking state machine and allowed transitions.
+- Store booking status history, actor, reason and timestamps.
+- Add concurrency tests for two users competing for the final slot.
+
+[09] PAYMENT MODULE
+- Implement payment intent/manual transfer records and receipt uploads.
+- Implement Accounting/Sale review: confirm, reject, request correction and reconcile.
+- Link every payment to one booking and prevent duplicate transaction references.
+- Calculate paid amount, deposit status, balance and overdue status.
+- Implement refund request and approval without deleting original transactions.
+- Add webhook verification and idempotent processing if a gateway is integrated.
+
+[10] CANCELLATION AND CHANGE MODULE
+- Implement customer cancellation/change request.
+- Calculate policy result, fee and estimated refund using versioned policies.
+- Route out-of-policy cases to authorized approval.
+- Release capacity only after valid cancellation.
+- Require reason and audit trail for manual overrides.
+
+[11] OPERATIONS MODULE
+- Generate passenger manifest from confirmed bookings.
+- Implement guide, vehicle, driver and partner resources.
+- Add availability and schedule-conflict validation.
+- Implement assignment draft, sent, acknowledged and cancelled statuses.
+- Implement cutoff configuration, with the current baseline at 21:00 on the previous day.
+- Notify affected users after manifest or assignment changes.
+
+[12] TRIP EXECUTION MODULE
+- Give Guides a mobile-responsive tour dashboard.
+- Implement passenger check-in, late/no-contact notes and incident records.
+- Implement trip statuses: PREPARING, IN_PROGRESS, COMPLETED, INTERRUPTED, CANCELLED.
+- Implement change request and approval flow for abnormal conditions.
+- Keep OI-02 as a manual approval workflow until the business rule is confirmed.
+
+[13] EXPENSE AND SETTLEMENT MODULE
+- Implement expense categories, amounts, evidence uploads and submission status.
+- Implement Guide submission and Accounting review/return/approval.
+- Apply the current 24-hour submission baseline as configurable, not hard-coded.
+- Calculate tour revenue, expense and profit from linked records.
+- Ensure reports can trace every aggregate back to source bookings and expenses.
+
+[14] NOTIFICATION MODULE
+- Implement event-driven notifications for booking, payment, cancellation, assignment and schedule changes.
+- Implement reminder scheduling for gathering/departure time.
+- Support in-app notification first; add email/SMS/push adapters behind interfaces.
+- Store delivery attempts, provider response, status and retry count.
+- Add idempotency keys so one event does not notify twice unintentionally.
+
+[15] REPORTING AND AUDIT
+- Implement booking, customer, cancellation, payment, debt, revenue, expense and profit reports.
+- Add filters by date, tour, departure, status and source.
+- Add CSV/XLSX/PDF export with permission checks.
+- Implement immutable audit records for sensitive business actions.
+- Verify report totals against transactional test fixtures.
+
+[16] TESTING STRATEGY
+- Unit test pricing, policy, slot, state transition and permission services.
+- Integration test database transactions, API authorization and file uploads.
+- End-to-end test UC-01 through UC-08.
+- Add concurrency tests for slot reservation and payment idempotency tests.
+- Add regression tests for cancellation, refund, assignment conflict and unresolved issues.
+- Run accessibility, responsive-layout, performance and security checks.
+
+[17] DATA MIGRATION AND ADOPTION
+- Inventory current Excel, Google Sheets, Word/PDF, Zalo-derived records and paper forms.
+- Define mapping from current fields to the normalized database model.
+- Clean duplicate customers, invalid phone numbers, invalid dates and inconsistent status values.
+- Import only approved data with an import report and rollback plan.
+- Train Sale, Operations, Guides, Accounting and Managers with role-specific scenarios.
+
+[18] DEPLOYMENT AND OPERATIONS
+- Build development, staging and production environments.
+- Configure HTTPS, secrets management, database backups, object-storage backups and monitoring.
+- Add health checks, structured logs, metrics and alerting.
+- Define release, rollback, migration and incident-response procedures.
+- Verify restore from backup before production release.
+
+[19] ACCEPTANCE AND RELEASE GATES
+- Product owner accepts all Must stories and their acceptance criteria.
+- Security review passes authentication, RBAC, file access and sensitive-data checks.
+- No critical defects remain in booking, payment, slot or assignment flows.
+- Reports reconcile with test data.
+- Pilot users complete real scenarios without falling back to multiple spreadsheets.
+- Production release is approved only after backup, rollback and monitoring checks pass.
+
+[20] IMPLEMENTATION ORDER
+1. Architecture, repository, environments and database migrations.
+2. Authentication, roles, permissions and audit foundation.
+3. Tour, itinerary, departure and slot management.
+4. Customer, booking, price calculation and status history.
+5. Payment, reconciliation, cancellation and refund.
+6. Manifest, assignment, guide execution and notifications.
+7. Expense, settlement, reporting and exports.
+8. Data migration, pilot, acceptance testing and production deployment.

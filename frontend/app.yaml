@@ -1,0 +1,23 @@
+kind: wasmer.io/App.v0
+name: DaLatGofrontend
+owner: bnj196
+package: .
+app_id: da_2J7IAtxU5erm
+annotations:
+  anybuild.run/config:
+    edgejs_enable: true
+    edgejs_precompile: true
+    name: out
+    node_build_command: npm run build
+    node_framework: vite
+    node_install_inputs:
+    - package.json
+    node_package_manager: npm
+    node_package_name: dalat-go-frontend
+    node_remove_native_binaries: true
+    node_server: node
+    npm_version: '11'
+    static_dir: dist
+  anybuild.run/provider: node-static
+  anybuild.run/version: 0.33.0
+  wasmer.io/version: 7.5.0
