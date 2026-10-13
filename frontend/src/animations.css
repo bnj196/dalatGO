@@ -1,0 +1,522 @@
+/* ==========================================================================
+   DALAT GO - CONTEXT ADAPTATION MOTION ENGINE
+   Spec Compliance:
+   - Platform Scaling (Desktop 1.0x | Tablet 0.9x | Mobile 0.8x | Watch 0.6x | TV 1.3x)
+   - Accessibility (prefers-reduced-motion, vestibular safety, cognitive consistency)
+   - Performance Budgets (Tier Optimal GPU: transform & opacity, 60fps target)
+   - Content Type Adaptation (E-commerce 200-400ms | SaaS 200-400ms Low Density)
+   - Responsive Motion (Container width displacement scaling)
+   - Dark Mode Motion Adaptation (10-20% reduced intensity, subtle ambient)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. ROOT MOTION TOKENS & BASELINES
+   -------------------------------------------------------------------------- */
+:root {
+  /* Platform Duration Modifier (Default 1.0x baseline) */
+  --platform-dur-mod: 1;
+
+  /* Content Type Modifier (E-commerce baseline 1.0x, SaaS 0.9x) */
+  --type-dur-mod: 1;
+
+  /* Container Width Duration Modifier */
+  --container-dur-mod: 1;
+
+  /* Dark Mode Motion Intensity (Light: 1.0, Dark: 0.82 -> 18% reduction) */
+  --motion-intensity: 1;
+
+  /* Stagger Budget Modifier (Desktop: 1.0, Mobile: 0.7 -> 30% reduction) */
+  --stagger-budget-mod: 1;
+
+  /* Spatial Displacement Base (Responsive: 6px to 22px) */
+  --displacement-base: 16px;
+  --displacement: calc(var(--displacement-base) * var(--motion-intensity));
+
+  /* Calculated Duration Tokens (Target: 60fps, 200-400ms range) */
+  --dur-touch: 75ms; /* Touch feedback < 100ms */
+  --dur-fast: calc(150ms * var(--platform-dur-mod) * var(--type-dur-mod) * var(--container-dur-mod));
+  --dur-base: calc(260ms * var(--platform-dur-mod) * var(--type-dur-mod) * var(--container-dur-mod));
+  --dur-slow: calc(380ms * var(--platform-dur-mod) * var(--type-dur-mod) * var(--container-dur-mod));
+  --dur-ambient: 5000ms;
+
+  /* Stagger Step Calculation */
+  --stagger-step: calc(60ms * var(--stagger-budget-mod));
+
+  /* Physics Curves */
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-quiet: cubic-bezier(0.2, 0, 0.4, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* --------------------------------------------------------------------------
+   2. CONTENT TYPE ADAPTATION
+   - E-commerce / Travel: 200-400ms, Medium motion density
+   - Enterprise SaaS: 200-400ms, Low motion density, corporate precision
+   -------------------------------------------------------------------------- */
+.content-ecommerce,
+.page,
+.hero,
+.tour-section {
+  --type-dur-mod: 1;
+}
+
+.content-saas,
+.admin-layout,
+.admin-main {
+  --type-dur-mod: 0.9; /* Fast & crisp corporate feel */
+  --displacement-base: 12px; /* Lower motion density */
+}
+
+/* --------------------------------------------------------------------------
+   3. PLATFORM SCALING & CONTAINER WIDTH MEDIA QUERIES
+   -------------------------------------------------------------------------- */
+
+/* TV / Kiosk (> 1440px): 1.3x Duration, Full complexity, All physics */
+@media (min-width: 1441px) {
+  :root {
+    --platform-dur-mod: 1.3;
+    --container-dur-mod: 1.1;
+    --displacement-base: 22px;
+    --stagger-budget-mod: 1.1;
+  }
+}
+
+/* Large Desktop (> 1200px - 1440px): 1.0x baseline, 1.1x container, Max displacement 15% */
+@media (min-width: 1201px) and (max-width: 1440px) {
+  :root {
+    --platform-dur-mod: 1;
+    --container-dur-mod: 1.1;
+    --displacement-base: 18px;
+    --stagger-budget-mod: 1;
+  }
+}
+
+/* Standard Desktop (1025px - 1200px): 1.0x baseline, Max displacement 20% */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  :root {
+    --platform-dur-mod: 1;
+    --container-dur-mod: 1;
+    --displacement-base: 16px;
+    --stagger-budget-mod: 1;
+  }
+}
+
+/* Tablet (769px - 1024px): 0.9x Duration, Standard complexity, Most physics */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root {
+    --platform-dur-mod: 0.9;
+    --container-dur-mod: 1;
+    --displacement-base: 14px;
+    --stagger-budget-mod: 0.9;
+  }
+}
+
+/* Mobile (381px - 768px): 0.8x Duration, Reduced complexity (1-2 props), Snappy only */
+@media (min-width: 381px) and (max-width: 768px) {
+  :root {
+    --platform-dur-mod: 0.8;
+    --container-dur-mod: 1;
+    --displacement-base: 10px;
+    /* Reduce stagger budget by 30% */
+    --stagger-budget-mod: 0.7;
+    --ease-spring: var(--ease-snappy); /* Snappy only, no spring wobble */
+  }
+}
+
+/* Small Container / Mobile (< 400px): 0.8x Duration, Max displacement 20% of width */
+@media (max-width: 400px) {
+  :root {
+    --platform-dur-mod: 0.8;
+    --container-dur-mod: 0.8;
+    --displacement-base: 6px;
+    --stagger-budget-mod: 0.65;
+  }
+}
+
+/* Watch / Micro (< 380px): 0.6x Duration, Minimal complexity (1 property: opacity), No physics */
+@media (max-width: 380px) {
+  :root {
+    --platform-dur-mod: 0.6;
+    --container-dur-mod: 0.8;
+    --displacement-base: 0px; /* Zero spatial movement */
+    --stagger-budget-mod: 0.4;
+    --ease-smooth: linear;
+    --ease-snappy: ease-out;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. DARK MODE MOTION INTENSITY (10-20% Reduction -> 18% reduction = 0.82)
+   - Bright on dark = higher perceived visual contrast and impact
+   - Reduce motion displacement and ambient intensity
+   - Avoid pure white flashes
+   -------------------------------------------------------------------------- */
+:root[data-theme='dark'] {
+  --motion-intensity: 0.82;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --motion-intensity: 0.82;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. PERFORMANCE BUDGETS (TIER OPTIMAL: TRANSFORM & OPACITY)
+   - GPU-accelerated compositing
+   - Avoid animating box-shadow, border-radius, width, height, filter
+   - Pre-rendered pseudo-element shadow elevation
+   -------------------------------------------------------------------------- */
+
+/* Base transition rules for interactive GPU elements */
+.button,
+.round-arrow,
+.icon-button,
+.tab,
+.theme-toggle-quick,
+.adaptation-pill-btn {
+  transition:
+    transform var(--dur-fast) var(--ease-smooth),
+    opacity var(--dur-fast) var(--ease-smooth),
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+  will-change: auto;
+}
+
+/* Touch feedback < 100ms rule: Active state */
+.button:active,
+.round-arrow:active,
+.icon-button:active,
+.tab:active,
+.tour-card:active,
+.quick-grid a:active,
+.theme-toggle-quick:active,
+.adaptation-pill-btn:active {
+  transform: scale3d(0.97, 0.97, 1);
+  transition-duration: var(--dur-touch) !important;
+  transition-timing-function: var(--ease-snappy) !important;
+}
+
+/* Desktop Opportunities: Fine pointer hover states */
+@media (hover: hover) and (pointer: fine) {
+  .button:hover,
+  .round-arrow:hover {
+    transform: translate3d(0, calc(-1.5px * var(--motion-intensity)), 0);
+  }
+
+  .tour-card {
+    transition: transform var(--dur-base) var(--ease-smooth);
+    will-change: transform;
+  }
+
+  /* GPU-Optimal Hover Elevation: Opacity of pseudo-element shadow, NOT box-shadow animation */
+  .tour-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 16px 36px rgba(10, 50, 42, 0.12);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-smooth);
+    will-change: opacity;
+  }
+
+  .tour-card:hover {
+    transform: translate3d(0, calc(-4px * var(--motion-intensity)), 0);
+  }
+
+  .tour-card:hover::after {
+    opacity: 1;
+  }
+
+  /* Vestibular Safe: Subtle image scale <= 1.02x */
+  .tour-card:hover .tour-image img {
+    transform: scale3d(1.02, 1.02, 1);
+  }
+
+  .quick-grid a {
+    transition: transform var(--dur-fast) var(--ease-smooth), background-color var(--dur-fast) ease;
+  }
+
+  .quick-grid a:hover {
+    transform: translate3d(calc(3px * var(--motion-intensity)), 0, 0);
+  }
+
+  .stat-card {
+    transition: transform var(--dur-fast) var(--ease-smooth);
+  }
+
+  .stat-card:hover {
+    transform: translate3d(0, calc(-2px * var(--motion-intensity)), 0);
+  }
+}
+
+/* Mobile Rules: Disable hover transforms, keep crisp touch states */
+@media (hover: none) {
+  .button:hover,
+  .round-arrow:hover,
+  .tour-card:hover,
+  .quick-grid a:hover,
+  .stat-card:hover {
+    transform: none;
+  }
+
+  .tour-card:hover .tour-image img {
+    transform: none;
+  }
+
+  .tour-card::after {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. RESPONSIVE REVEAL & STAGGER CHOREOGRAPHY
+   - Small viewport: sequential, 1 element at a time, reduced stagger
+   - Medium viewport: 2 columns standard stagger
+   - Large desktop: Center-out stagger, spatial choreography
+   -------------------------------------------------------------------------- */
+
+@keyframes revealSpatial {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--displacement), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes revealSpatialLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(calc(-1 * var(--displacement)), 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ambientPulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale3d(1.015, 1.015, 1);
+  }
+}
+
+.hero-copy {
+  animation: revealSpatial var(--dur-slow) var(--ease-smooth) both;
+}
+
+.hero-badge {
+  animation: revealSpatial var(--dur-slow) var(--ease-smooth) both;
+  animation-delay: calc(var(--stagger-step) * 1.5);
+}
+
+.hero-badge-ambient {
+  animation: ambientPulse var(--dur-ambient) ease-in-out infinite;
+}
+
+.feature-strip > div {
+  animation: revealSpatial var(--dur-base) var(--ease-smooth) both;
+}
+
+/* Sequential Stagger */
+.feature-strip > div:nth-child(1) { animation-delay: calc(var(--stagger-step) * 0.5); }
+.feature-strip > div:nth-child(2) { animation-delay: calc(var(--stagger-step) * 1.2); }
+.feature-strip > div:nth-child(3) { animation-delay: calc(var(--stagger-step) * 1.9); }
+
+/* Tour Card Stagger:
+   On large screens (> 1024px): Center-out choreography (middle card arrives slightly ahead or harmonious)
+   On smaller screens: sequential
+*/
+.tour-card {
+  animation: revealSpatial var(--dur-base) var(--ease-smooth) both;
+}
+
+@media (min-width: 1025px) {
+  /* Center-out stagger for 3-column desktop grid */
+  .tour-grid .tour-card:nth-child(2) {
+    animation-delay: calc(var(--stagger-step) * 0.5);
+  }
+  .tour-grid .tour-card:nth-child(1) {
+    animation-delay: calc(var(--stagger-step) * 1.2);
+  }
+  .tour-grid .tour-card:nth-child(3) {
+    animation-delay: calc(var(--stagger-step) * 1.6);
+  }
+  .tour-grid .tour-card:nth-child(4) {
+    animation-delay: calc(var(--stagger-step) * 2.1);
+  }
+  .tour-grid .tour-card:nth-child(5) {
+    animation-delay: calc(var(--stagger-step) * 2.6);
+  }
+  .tour-grid .tour-card:nth-child(6) {
+    animation-delay: calc(var(--stagger-step) * 3.1);
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Sequential stagger on tablet and mobile */
+  .tour-card:nth-child(1) { animation-delay: calc(var(--stagger-step) * 0.6); }
+  .tour-card:nth-child(2) { animation-delay: calc(var(--stagger-step) * 1.3); }
+  .tour-card:nth-child(3) { animation-delay: calc(var(--stagger-step) * 2.0); }
+  .tour-card:nth-child(4) { animation-delay: calc(var(--stagger-step) * 2.7); }
+  .tour-card:nth-child(5) { animation-delay: calc(var(--stagger-step) * 3.4); }
+  .tour-card:nth-child(6) { animation-delay: calc(var(--stagger-step) * 4.1); }
+}
+
+/* Admin Stagger (Low Density SaaS) */
+.stat-card {
+  animation: revealSpatial var(--dur-fast) var(--ease-snappy) both;
+}
+.stat-card:nth-child(1) { animation-delay: calc(var(--stagger-step) * 0.4); }
+.stat-card:nth-child(2) { animation-delay: calc(var(--stagger-step) * 0.8); }
+.stat-card:nth-child(3) { animation-delay: calc(var(--stagger-step) * 1.2); }
+.stat-card:nth-child(4) { animation-delay: calc(var(--stagger-step) * 1.6); }
+
+.panel {
+  animation: revealSpatial var(--dur-base) var(--ease-snappy) both;
+  animation-delay: calc(var(--stagger-step) * 1.2);
+}
+
+/* --------------------------------------------------------------------------
+   7. ACCESSIBILITY ENGINE (prefers-reduced-motion & [data-motion="reduced"])
+   - Slide entrance -> Opacity fade only
+   - Bounce/spring -> Instant or simple ease-out
+   - Parallax -> Static positioning
+   - Auto-playing -> Paused, user-initiated
+   - Complex choreography -> Single fade
+   - Continuous ambient -> Static or subtle opacity pulse
+   - Remove spatial movement, keep opacity, reduce duration 50%+
+   -------------------------------------------------------------------------- */
+
+@keyframes reducedFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 70ms !important;
+    --dur-base: 110ms !important;
+    --dur-slow: 150ms !important;
+    --displacement: 0px !important;
+    --displacement-base: 0px !important;
+    --ease-spring: ease-out !important;
+    --ease-smooth: ease-out !important;
+    --ease-snappy: ease-out !important;
+    --stagger-step: 0ms !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: var(--dur-base) !important;
+    animation-delay: 0ms !important;
+    transition-duration: var(--dur-fast) !important;
+  }
+
+  .hero-copy,
+  .hero-badge,
+  .feature-strip > div,
+  .tour-card,
+  .stat-card,
+  .panel,
+  .booking-panel,
+  .detail-image,
+  .auth-card,
+  .section-heading,
+  .page-intro {
+    animation-name: reducedFade !important;
+    transform: none !important;
+  }
+
+  .hero-badge-ambient {
+    animation: none !important;
+  }
+
+  .button:hover,
+  .round-arrow:hover,
+  .tour-card:hover,
+  .tour-card:hover .tour-image img,
+  .quick-grid a:hover,
+  .stat-card:hover {
+    transform: none !important;
+  }
+
+  .tour-card::after {
+    opacity: 0 !important;
+  }
+}
+
+/* Manual user override toggle support */
+:root[data-motion='reduced'] {
+  --dur-fast: 70ms !important;
+  --dur-base: 110ms !important;
+  --dur-slow: 150ms !important;
+  --displacement: 0px !important;
+  --displacement-base: 0px !important;
+  --ease-spring: ease-out !important;
+  --ease-smooth: ease-out !important;
+  --ease-snappy: ease-out !important;
+  --stagger-step: 0ms !important;
+}
+
+:root[data-motion='reduced'] html {
+  scroll-behavior: auto !important;
+}
+
+:root[data-motion='reduced'] * {
+  animation-duration: var(--dur-base) !important;
+  animation-delay: 0ms !important;
+  transition-duration: var(--dur-fast) !important;
+}
+
+:root[data-motion='reduced'] .hero-copy,
+:root[data-motion='reduced'] .hero-badge,
+:root[data-motion='reduced'] .feature-strip > div,
+:root[data-motion='reduced'] .tour-card,
+:root[data-motion='reduced'] .stat-card,
+:root[data-motion='reduced'] .panel,
+:root[data-motion='reduced'] .booking-panel,
+:root[data-motion='reduced'] .detail-image,
+:root[data-motion='reduced'] .auth-card,
+:root[data-motion='reduced'] .section-heading,
+:root[data-motion='reduced'] .page-intro {
+  animation-name: reducedFade !important;
+  transform: none !important;
+}
+
+:root[data-motion='reduced'] .hero-badge-ambient {
+  animation: none !important;
+}
+
+:root[data-motion='reduced'] .button:hover,
+:root[data-motion='reduced'] .round-arrow:hover,
+:root[data-motion='reduced'] .tour-card:hover,
+:root[data-motion='reduced'] .tour-card:hover .tour-image img,
+:root[data-motion='reduced'] .quick-grid a:hover,
+:root[data-motion='reduced'] .stat-card:hover {
+  transform: none !important;
+}
+
+:root[data-motion='reduced'] .tour-card::after {
+  opacity: 0 !important;
+}
