@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     pg_sslmode: str = "require"
     secret_key: str = "change-this-in-production"
     access_token_expire_minutes: int = 60
-    cors_origins: str = "https://dalatgo.tienthien.66ghz.com,http://localhost:5173"
+    cors_origins: str = "https://dalatgo.tienthien.66ghz.com,https://dalat.huydz.42web.io,https://huydz1506.netlify.app"
     admin_email: str = "admin@dalatgo.local"
     admin_password: str = "Admin123!"
 

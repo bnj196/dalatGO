@@ -21,3 +21,4 @@ annotations:
   anybuild.run/provider: node-static
   anybuild.run/version: 0.33.0
   wasmer.io/version: 7.5.0
+enableDatabase: true
